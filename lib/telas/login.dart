@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsappweb/uteis/paleta_cores.dart';
 
@@ -16,6 +17,38 @@ class _LoginState extends State<Login> {
   final TextEditingController _controllerSenha =
       TextEditingController(text: "1234567");
   bool _cadastroUsuario = false;
+  //FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void _validarCampos() async {
+    String nome = _controllerNome.text;
+    String email = _controllerEmail.text;
+    String senha = _controllerSenha.text;
+
+    if (email.isNotEmpty && email.contains("@")) {
+      if (senha.isNotEmpty && senha.length > 6) {
+        if (_cadastroUsuario) {
+          //Cadastro
+          if (nome.isNotEmpty && nome.length >= 3) {
+            // await _auth
+            //     .createUserWithEmailAndPassword(email: email, password: senha)
+            //     .then((auth) {
+            //   //Upload da imagem
+            //   String? idUsuario = auth.user?.uid;
+            //   print("Usuário cadastrado: $idUsuario");
+            // });
+          } else {
+            const Text("Nome inválido, digite ao menos 3 caracteres");
+          }
+        } else {
+          //Login
+        }
+      } else {
+        const Text("Senha inválida");
+      }
+    } else {
+      const Text("Email inválido");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +138,9 @@ class _LoginState extends State<Login> {
                               child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                       primary: PaletaCores.corPrimaria),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    _validarCampos();
+                                  },
                                   child: Padding(
                                     padding:
                                         const EdgeInsets.symmetric(vertical: 8),
