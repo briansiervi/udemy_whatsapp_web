@@ -47,3 +47,4 @@ app.*.map.json
 
 # credenciais do Firebase
 web/credentials.js
+lib/firebase_options.dart
