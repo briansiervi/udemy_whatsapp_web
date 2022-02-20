@@ -46,5 +46,4 @@ app.*.map.json
 /android/app/release
 
 # credenciais do Firebase
-web/credentials.js
 lib/firebase_options.dart

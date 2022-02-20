@@ -1,3 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsappweb/uteis/paleta_cores.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,13 +16,38 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   final TextEditingController _controllerNome =
-      TextEditingController(text: "Majin Boo");
+      TextEditingController(text: "Scorpion");
   final TextEditingController _controllerEmail =
-      TextEditingController(text: "majinboo@gmail.com");
+      TextEditingController(text: "scorpion@gmail.com");
   final TextEditingController _controllerSenha =
       TextEditingController(text: "1234567");
   bool _cadastroUsuario = false;
   FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseStorage _storage = FirebaseStorage.instance;
+  Uint8List? _arquivoImagemSelecionado;
+
+  void _selecionarImagem() async {
+    //Selecionar o arquivo
+    FilePickerResult? resultado =
+        await FilePicker.platform.pickFiles(type: FileType.image);
+
+    //Recuperar o arquivo
+    setState(() {
+      _arquivoImagemSelecionado = resultado?.files.single.bytes;
+    });
+  }
+
+  _uploadImagem(String idUsuario) {
+    Uint8List? arquivoSelecionado = _arquivoImagemSelecionado;
+    if (arquivoSelecionado != null) {
+      Reference imagemPerfilRef = _storage.ref("imagens/perfil/$idUsuario.jpg");
+      UploadTask uploadTask = imagemPerfilRef.putData(arquivoSelecionado);
+      uploadTask.whenComplete(() async {
+        String linkImagem = await uploadTask.snapshot.ref.getDownloadURL();
+        print("Link da imagem: $linkImagem");
+      });
+    }
+  }
 
   void _validarCampos() async {
     String nome = _controllerNome.text;
@@ -27,26 +57,35 @@ class _LoginState extends State<Login> {
     if (email.isNotEmpty && email.contains("@")) {
       if (senha.isNotEmpty && senha.length > 6) {
         if (_cadastroUsuario) {
-          //Cadastro
-          if (nome.isNotEmpty && nome.length >= 3) {
-            await _auth
-                .createUserWithEmailAndPassword(email: email, password: senha)
-                .then((auth) {
-              //Upload da imagem
-              String? idUsuario = auth.user?.uid;
-              print("Usuário cadastrado: $idUsuario");
-            });
+          if (_arquivoImagemSelecionado != null) {
+            //Cadastro
+            if (nome.isNotEmpty && nome.length >= 3) {
+              await _auth
+                  .createUserWithEmailAndPassword(email: email, password: senha)
+                  .then((auth) {
+                //Upload da imagem
+                String? idUsuario = auth.user?.uid;
+
+                if (idUsuario != null) {
+                  _uploadImagem(idUsuario);
+                }
+
+                print("Usuário cadastrado: $idUsuario");
+              });
+            } else {
+              const Text("Nome inválido, digite ao menos 3 caracteres");
+            }
           } else {
-            const Text("Nome inválido, digite ao menos 3 caracteres");
+            print("Selecione uma imagem");
           }
         } else {
           try {
-            String? _email;
+            String? email2;
             await _auth
                 .signInWithEmailAndPassword(email: email, password: senha)
-                .then((auth) => {_email = auth.user?.email});
+                .then((auth) => {email2 = auth.user?.email});
 
-            print("Usuário logado: $_email");
+            print("Usuário logado: $email2");
           } catch (e) {
             print("Usuário inválido: $email");
           }
@@ -95,18 +134,25 @@ class _LoginState extends State<Login> {
                             child: Column(
                               children: [
                                 ClipOval(
-                                  child: Image.asset(
-                                    "imagens/perfil.png",
-                                    width: 120,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                  ),
+                                  child: _arquivoImagemSelecionado != null
+                                      ? Image.memory(
+                                          _arquivoImagemSelecionado!,
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Image.asset(
+                                          "imagens/perfil.png",
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                        ),
                                 ),
                                 const SizedBox(
                                   height: 8,
                                 ),
                                 OutlinedButton(
-                                  onPressed: () {},
+                                  onPressed: _selecionarImagem,
                                   child: const Text("Selecionar foto"),
                                 ),
                                 const SizedBox(
