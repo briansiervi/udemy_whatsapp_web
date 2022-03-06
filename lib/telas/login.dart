@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,10 +23,18 @@ class _LoginState extends State<Login> {
   final TextEditingController _controllerSenha =
       TextEditingController(text: "1234567");
   bool _cadastroUsuario = false;
-  FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseStorage _storage = FirebaseStorage.instance;
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Uint8List? _arquivoImagemSelecionado;
+
+  void _verificarUsuarioLogado() async {
+    Future<User>? usuarioLogado = await _auth.currentUser;
+
+    if (usuarioLogado != null) {
+      Navigator.pushReplacementNamed(context, "/home");
+    }
+  }
 
   void _selecionarImagem() async {
     //Selecionar o arquivo
@@ -60,6 +67,19 @@ class _LoginState extends State<Login> {
     }
   }
 
+  static Route<dynamic> _dadosInvalidos(String corpoMensagem) {
+    return MaterialPageRoute(builder: (_) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Mensagem"),
+        ),
+        body: Center(
+          child: Text(corpoMensagem),
+        ),
+      );
+    });
+  }
+
   void _validarCampos() async {
     String nome = _controllerNome.text;
     String? email = _controllerEmail.text;
@@ -88,20 +108,20 @@ class _LoginState extends State<Login> {
               const Text("Nome inválido, digite ao menos 3 caracteres");
             }
           } else {
-            print("Selecione uma imagem");
+            _dadosInvalidos("Selecione uma imagem");
           }
         } else {
           try {
-            String? email2;
+            //String? email2;
             await _auth
                 .signInWithEmailAndPassword(email: email, password: senha)
                 //.then((auth) => {email2 = auth.user?.email});
                 .then(
                     (auth) => Navigator.pushReplacementNamed(context, "/home"));
 
-            print("Usuário logado: $email2");
+            //print("Usuário logado: $email2");
           } catch (e) {
-            print("Usuário inválido: $email");
+            _dadosInvalidos("Usuário inválido: $email");
           }
         }
       } else {
@@ -110,6 +130,12 @@ class _LoginState extends State<Login> {
     } else {
       const Text("Email inválido");
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _verificarUsuarioLogado();
   }
 
   @override
