@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:whatsappweb/modelos/usuario.dart';
 import 'package:whatsappweb/uteis/paleta_cores.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -24,6 +26,7 @@ class _LoginState extends State<Login> {
   bool _cadastroUsuario = false;
   FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseStorage _storage = FirebaseStorage.instance;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Uint8List? _arquivoImagemSelecionado;
 
   void _selecionarImagem() async {
@@ -37,14 +40,22 @@ class _LoginState extends State<Login> {
     });
   }
 
-  _uploadImagem(String idUsuario) {
+  _uploadImagem(Usuario usuario) {
     Uint8List? arquivoSelecionado = _arquivoImagemSelecionado;
     if (arquivoSelecionado != null) {
-      Reference imagemPerfilRef = _storage.ref("imagens/perfil/$idUsuario.jpg");
+      Reference imagemPerfilRef =
+          _storage.ref("imagens/perfil/${usuario.idUsuario}.jpg");
       UploadTask uploadTask = imagemPerfilRef.putData(arquivoSelecionado);
       uploadTask.whenComplete(() async {
-        String linkImagem = await uploadTask.snapshot.ref.getDownloadURL();
-        print("Link da imagem: $linkImagem");
+        //print("Link da imagem: $linkImagem");
+        String urlImagem = await uploadTask.snapshot.ref.getDownloadURL();
+        usuario.urlImagem = urlImagem;
+
+        final usuariosRef = _firestore.collection("usuarios");
+        usuariosRef.doc(usuario.idUsuario).set(usuario.toMap()).then((value) {
+          //tela principal
+          Navigator.pushReplacementNamed(context, "/home");
+        });
       });
     }
   }
@@ -67,10 +78,11 @@ class _LoginState extends State<Login> {
                 String? idUsuario = auth.user?.uid;
 
                 if (idUsuario != null) {
-                  _uploadImagem(idUsuario);
+                  Usuario usuario = Usuario(idUsuario, nome, email);
+                  _uploadImagem(usuario);
                 }
 
-                print("Usuário cadastrado: $idUsuario");
+                //print("Usuário cadastrado: $idUsuario");
               });
             } else {
               const Text("Nome inválido, digite ao menos 3 caracteres");
@@ -83,7 +95,9 @@ class _LoginState extends State<Login> {
             String? email2;
             await _auth
                 .signInWithEmailAndPassword(email: email, password: senha)
-                .then((auth) => {email2 = auth.user?.email});
+                //.then((auth) => {email2 = auth.user?.email});
+                .then(
+                    (auth) => Navigator.pushReplacementNamed(context, "/home"));
 
             print("Usuário logado: $email2");
           } catch (e) {

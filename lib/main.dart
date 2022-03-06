@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:whatsappweb/rotas.dart';
 import 'telas/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -11,6 +12,7 @@ void main() async {
   );
   runApp(const MaterialApp(
     title: "WhatsApp Web",
-    home: Login(),
+    //home: Login(),
+    initialRoute: "/", onGenerateRoute: Rotas.gerarRota,
   ));
 }
