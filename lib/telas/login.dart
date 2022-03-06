@@ -28,8 +28,8 @@ class _LoginState extends State<Login> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Uint8List? _arquivoImagemSelecionado;
 
-  void _verificarUsuarioLogado() async {
-    Future<User>? usuarioLogado = await _auth.currentUser;
+  void _verificarUsuarioLogado() {
+    User? usuarioLogado = _auth.currentUser;
 
     if (usuarioLogado != null) {
       Navigator.pushReplacementNamed(context, "/home");
