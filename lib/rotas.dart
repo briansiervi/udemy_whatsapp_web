@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:whatsappweb/telas/home.dart';
 import 'package:whatsappweb/telas/login.dart';
+import 'package:whatsappweb/telas/mensagens.dart';
+
+import 'modelos/usuario.dart';
 
 class Rotas {
   static Route<dynamic> gerarRota(RouteSettings settings) {
@@ -12,6 +15,8 @@ class Rotas {
         return MaterialPageRoute(builder: (_) => const Login());
       case "/home":
         return MaterialPageRoute(builder: (_) => const Home());
+      case "/mensagens":
+        return MaterialPageRoute(builder: (_) => Mensagens(args as Usuario));
     }
 
     return _erroRota();
