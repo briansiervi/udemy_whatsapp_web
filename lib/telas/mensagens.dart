@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsappweb/modelos/usuario.dart';
+import 'package:whatsappweb/telas/componentes/lista_mensagens.dart';
 
 class Mensagens extends StatefulWidget {
   final Usuario usuarioDestinatario;
@@ -27,25 +28,31 @@ class _MensagensState extends State<Mensagens> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.grey,
-              backgroundImage:
-                  CachedNetworkImageProvider(_usuarioDestinatario.urlImagem),
-            ),
-            const SizedBox(
-              width: 8,
-            ),
-            Text(
-              _usuarioDestinatario.nome,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+        appBar: AppBar(
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: Colors.grey,
+                backgroundImage:
+                    CachedNetworkImageProvider(_usuarioDestinatario.urlImagem),
+              ),
+              const SizedBox(
+                width: 8,
+              ),
+              Text(
+                _usuarioDestinatario.nome,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.more_vert),
             ),
           ],
         ),
-      ),
-    );
+        body: SafeArea(child: ListaMensagens()));
   }
 }
