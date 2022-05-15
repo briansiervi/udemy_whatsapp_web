@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsappweb/modelos/mensagem.dart';
@@ -24,6 +26,11 @@ class _ListaMensagensState extends State<ListaMensagens> {
   late Usuario _usuarioRemetente;
   late Usuario _usuarioDestinatario;
 
+  final StreamController _streamController =
+      StreamController<QuerySnapshot>.broadcast();
+
+  late StreamSubscription _streamMensagens;
+
   _enviarMensagem() {
     String textoMensagem = _controllerMensagem.text;
     String idUsuarioRemetente = _usuarioRemetente.idUsuario;
@@ -32,9 +39,19 @@ class _ListaMensagensState extends State<ListaMensagens> {
       Mensagem mensagem = Mensagem(
           idUsuarioRemetente, textoMensagem, Timestamp.now().toString());
 
+      //Salvar mensagem para o remetente
       String idUsuarioDetinatario = _usuarioDestinatario.idUsuario;
       _salvarMensagem(idUsuarioRemetente, idUsuarioDetinatario, mensagem);
+
+      //Salvar mensagem para o destinatario
+      _salvarMensagem(idUsuarioDetinatario, idUsuarioRemetente, mensagem);
     }
+  }
+
+  _recuperarDadosIniciais() {
+    _usuarioRemetente = widget.usuarioRemetente;
+    _usuarioDestinatario = widget.usuarioDestinatario;
+    _adicionarListenerMensagens();
   }
 
   _salvarMensagem(
@@ -48,9 +65,23 @@ class _ListaMensagensState extends State<ListaMensagens> {
     _controllerMensagem.clear();
   }
 
-  _recuperarDadosIniciais() {
-    _usuarioRemetente = widget.usuarioRemetente;
-    _usuarioDestinatario = widget.usuarioDestinatario;
+  _adicionarListenerMensagens() {
+    final stream = _firestore
+        .collection("mensagens")
+        .doc(_usuarioRemetente.idUsuario)
+        .collection(_usuarioDestinatario.idUsuario)
+        .orderBy("data", descending: false)
+        .snapshots();
+
+    _streamMensagens = stream.listen((dados) {
+      _streamController.add(dados);
+    });
+  }
+
+  @override
+  void dispose() {
+    _streamMensagens.cancel();
+    super.dispose();
   }
 
   @override
@@ -74,13 +105,73 @@ class _ListaMensagensState extends State<ListaMensagens> {
       child: Column(
         children: [
           //Listagem de mensagens
-          Expanded(
-            child: Container(
-              width: largura,
-              color: Colors.orange,
-              child: const Text("Lista mensagem"),
-            ),
-          ),
+          StreamBuilder(
+              stream: _streamController.stream,
+              builder: (context, snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.none:
+
+                  case ConnectionState.waiting:
+                    return Expanded(
+                      child: Center(
+                        child: Column(
+                          children: const [
+                            Text("Carregando dados"),
+                            CircularProgressIndicator(),
+                          ],
+                        ),
+                      ),
+                    );
+
+                  case ConnectionState.active:
+
+                  case ConnectionState.done:
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text("Erro ao carregar os dados!"),
+                      );
+                    } else {
+                      QuerySnapshot querySnapshot =
+                          snapshot.data as QuerySnapshot;
+                      List<DocumentSnapshot> listaMensagens =
+                          querySnapshot.docs.toList();
+
+                      return Expanded(
+                          child: ListView.builder(
+                              itemCount: querySnapshot.docs.length,
+                              itemBuilder: (context, indice) {
+                                DocumentSnapshot mensagem =
+                                    listaMensagens[indice];
+
+                                Alignment alinhamento = Alignment.bottomLeft;
+                                Color cor = Colors.white;
+
+                                if (_usuarioRemetente.idUsuario ==
+                                    mensagem["idUsuario"]) {
+                                  alinhamento = Alignment.bottomRight;
+                                  cor = PaletaCores.corMensagemEnviada;
+                                }
+
+                                Size largura =
+                                    MediaQuery.of(context).size * 0.8;
+
+                                return Align(
+                                  alignment: alinhamento,
+                                  child: Container(
+                                    constraints: BoxConstraints.loose(largura),
+                                    decoration: BoxDecoration(
+                                        color: cor,
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(8))),
+                                    padding: const EdgeInsets.all(16),
+                                    margin: const EdgeInsets.all(6),
+                                    child: Text(mensagem["texto"]),
+                                  ),
+                                );
+                              }));
+                    }
+                }
+              }),
 
           //Caixa de texto
           Container(
