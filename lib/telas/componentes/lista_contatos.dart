@@ -29,7 +29,7 @@ class _ListaContatosState extends State<ListaContatos> {
       String email = item["email"];
       String nome = item["nome"];
       String urlImagem = item["urlImagem"];
-      Usuario usuario = Usuario(idUsuario, email, nome, urlImagem: urlImagem);
+      Usuario usuario = Usuario(idUsuario, nome, email, urlImagem: urlImagem);
       listaUsuarios.add(usuario);
     }
     return listaUsuarios;

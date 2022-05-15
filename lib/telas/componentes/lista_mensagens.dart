@@ -1,14 +1,64 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:whatsappweb/modelos/mensagem.dart';
+import 'package:whatsappweb/modelos/usuario.dart';
 import 'package:whatsappweb/uteis/paleta_cores.dart';
 
 class ListaMensagens extends StatefulWidget {
-  const ListaMensagens({Key? key}) : super(key: key);
+  final Usuario usuarioRemetente;
+  final Usuario usuarioDestinatario;
+
+  const ListaMensagens({
+    Key? key,
+    required this.usuarioRemetente,
+    required this.usuarioDestinatario,
+  }) : super(key: key);
 
   @override
   State<ListaMensagens> createState() => _ListaMensagensState();
 }
 
 class _ListaMensagensState extends State<ListaMensagens> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _controllerMensagem = TextEditingController();
+  late Usuario _usuarioRemetente;
+  late Usuario _usuarioDestinatario;
+
+  _enviarMensagem() {
+    String textoMensagem = _controllerMensagem.text;
+    String idUsuarioRemetente = _usuarioRemetente.idUsuario;
+
+    if (textoMensagem.isNotEmpty) {
+      Mensagem mensagem = Mensagem(
+          idUsuarioRemetente, textoMensagem, Timestamp.now().toString());
+
+      String idUsuarioDetinatario = _usuarioDestinatario.idUsuario;
+      _salvarMensagem(idUsuarioRemetente, idUsuarioDetinatario, mensagem);
+    }
+  }
+
+  _salvarMensagem(
+      String idRemetente, String idDestinatario, Mensagem mensagem) {
+    _firestore
+        .collection("mensagens")
+        .doc(idRemetente)
+        .collection(idDestinatario)
+        .add(mensagem.toMap());
+
+    _controllerMensagem.clear();
+  }
+
+  _recuperarDadosIniciais() {
+    _usuarioRemetente = widget.usuarioRemetente;
+    _usuarioDestinatario = widget.usuarioDestinatario;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _recuperarDadosIniciais();
+  }
+
   @override
   Widget build(BuildContext context) {
     double largura = MediaQuery.of(context).size.width;
@@ -48,20 +98,21 @@ class _ListaMensagensState extends State<ListaMensagens> {
                       borderRadius: BorderRadius.circular(40),
                     ),
                     child: Row(
-                      children: const [
-                        Icon(Icons.insert_emoticon),
-                        SizedBox(
+                      children: [
+                        const Icon(Icons.insert_emoticon),
+                        const SizedBox(
                           width: 4,
                         ),
                         Expanded(
                           child: TextField(
-                            decoration: InputDecoration(
+                            controller: _controllerMensagem,
+                            decoration: const InputDecoration(
                                 hintText: "Digite uma mensagem",
                                 border: InputBorder.none),
                           ),
                         ),
-                        Icon(Icons.attach_file),
-                        Icon(Icons.camera_alt),
+                        const Icon(Icons.attach_file),
+                        const Icon(Icons.camera_alt),
                       ],
                     ),
                   ),
@@ -75,7 +126,9 @@ class _ListaMensagensState extends State<ListaMensagens> {
                     color: Colors.white,
                   ),
                   mini: true,
-                  onPressed: () {},
+                  onPressed: () {
+                    _enviarMensagem();
+                  },
                 ),
               ],
             ),
