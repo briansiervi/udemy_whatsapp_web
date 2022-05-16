@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:whatsappweb/modelos/conversa.dart';
 import 'package:whatsappweb/modelos/mensagem.dart';
 import 'package:whatsappweb/modelos/usuario.dart';
 import 'package:whatsappweb/uteis/paleta_cores.dart';
@@ -23,6 +24,8 @@ class ListaMensagens extends StatefulWidget {
 class _ListaMensagensState extends State<ListaMensagens> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _controllerMensagem = TextEditingController();
+  ScrollController _scrollController = ScrollController();
+
   late Usuario _usuarioRemetente;
   late Usuario _usuarioDestinatario;
 
@@ -40,11 +43,30 @@ class _ListaMensagensState extends State<ListaMensagens> {
           idUsuarioRemetente, textoMensagem, Timestamp.now().toString());
 
       //Salvar mensagem para o remetente
-      String idUsuarioDetinatario = _usuarioDestinatario.idUsuario;
-      _salvarMensagem(idUsuarioRemetente, idUsuarioDetinatario, mensagem);
+      String idUsuarioDestinatario = _usuarioDestinatario.idUsuario;
+
+      _salvarMensagem(idUsuarioRemetente, idUsuarioDestinatario, mensagem);
+      Conversa conversaRemetente = Conversa(
+        idUsuarioRemetente,
+        idUsuarioDestinatario,
+        mensagem.texto,
+        _usuarioDestinatario.nome,
+        _usuarioDestinatario.email,
+        _usuarioDestinatario.urlImagem,
+      );
+      _salvarConversa(conversaRemetente);
 
       //Salvar mensagem para o destinatario
-      _salvarMensagem(idUsuarioDetinatario, idUsuarioRemetente, mensagem);
+      _salvarMensagem(idUsuarioDestinatario, idUsuarioRemetente, mensagem);
+      Conversa conversaDestinatario = Conversa(
+        idUsuarioDestinatario,
+        idUsuarioRemetente,
+        mensagem.texto,
+        _usuarioRemetente.nome,
+        _usuarioRemetente.email,
+        _usuarioRemetente.urlImagem,
+      );
+      _salvarConversa(conversaDestinatario);
     }
   }
 
@@ -65,6 +87,15 @@ class _ListaMensagensState extends State<ListaMensagens> {
     _controllerMensagem.clear();
   }
 
+  _salvarConversa(Conversa conversa) {
+    _firestore
+        .collection("conversas")
+        .doc(conversa.idRemetente)
+        .collection("ultimas_mensagens")
+        .doc(conversa.idDestinatario)
+        .set(conversa.toMap());
+  }
+
   _adicionarListenerMensagens() {
     final stream = _firestore
         .collection("mensagens")
@@ -75,11 +106,15 @@ class _ListaMensagensState extends State<ListaMensagens> {
 
     _streamMensagens = stream.listen((dados) {
       _streamController.add(dados);
+      Timer(const Duration(seconds: 1), () {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
     });
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _streamMensagens.cancel();
     super.dispose();
   }
@@ -138,6 +173,7 @@ class _ListaMensagensState extends State<ListaMensagens> {
 
                       return Expanded(
                           child: ListView.builder(
+                              controller: _scrollController,
                               itemCount: querySnapshot.docs.length,
                               itemBuilder: (context, indice) {
                                 DocumentSnapshot mensagem =
