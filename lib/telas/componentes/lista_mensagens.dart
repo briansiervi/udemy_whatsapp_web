@@ -24,7 +24,7 @@ class ListaMensagens extends StatefulWidget {
 class _ListaMensagensState extends State<ListaMensagens> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _controllerMensagem = TextEditingController();
-  ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   late Usuario _usuarioRemetente;
   late Usuario _usuarioDestinatario;
