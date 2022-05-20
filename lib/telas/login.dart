@@ -33,6 +33,7 @@ class _LoginState extends State<Login> {
 
     if (usuarioLogado != null) {
       Navigator.pushReplacementNamed(context, "/home");
+      
     }
   }
 
