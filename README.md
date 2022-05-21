@@ -27,5 +27,19 @@ Publicar sua aplicação com Firebase Hosting
     - flutter build web
 6. Inicializar os serviços do Firebase
     - firebase init
+    - Hosting: Configure files for Firebase Hosting an (optionally) set up Github Action deploys
+    - Use an existing project
+    - What do you want to use as your public directory? (public)
+        - build/web
+    - Configure as a single-page app (rewrite all urls to /index.html)?
+        - y
+    - Set up automatic builds and deploys wit Github?
+        - y
+    - File build/web/idex.html already exists. Overwrite?
+        - n
+    - Set up the workflow to ru a build script before every deploy?
+        - y
+    - What script should be run before every deploy?
+        - npm run build
 7. Fazer a publicação para o Firebase
     - firebase deploy
