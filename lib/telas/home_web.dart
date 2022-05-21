@@ -235,7 +235,7 @@ class AreaLateralMensagens extends StatelessWidget {
             height: altura,
             color: PaletaCores.corFundoBarraClaro,
             child: const Center(
-              child: Text("Nenhum usuário selecinado no momento"),
+              child: Text("Nenhum usuário selecionado no momento"),
             ),
           );
   }
