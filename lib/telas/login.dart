@@ -33,7 +33,6 @@ class _LoginState extends State<Login> {
 
     if (usuarioLogado != null) {
       Navigator.pushReplacementNamed(context, "/home");
-      
     }
   }
 
@@ -48,7 +47,7 @@ class _LoginState extends State<Login> {
     });
   }
 
-  _uploadImagem(Usuario usuario) {
+  _uploadImagem(Usuario usuario, UserCredential auth) async {
     Uint8List? arquivoSelecionado = _arquivoImagemSelecionado;
     if (arquivoSelecionado != null) {
       Reference imagemPerfilRef =
@@ -58,6 +57,9 @@ class _LoginState extends State<Login> {
         //print("Link da imagem: $linkImagem");
         String urlImagem = await uploadTask.snapshot.ref.getDownloadURL();
         usuario.urlImagem = urlImagem;
+
+        await auth.user?.updateDisplayName(usuario.nome);
+        await auth.user?.updatePhotoURL(usuario.urlImagem);
 
         final usuariosRef = _firestore.collection("usuarios");
         usuariosRef.doc(usuario.idUsuario).set(usuario.toMap()).then((value) {
@@ -94,13 +96,13 @@ class _LoginState extends State<Login> {
             if (nome.isNotEmpty && nome.length >= 3) {
               await _auth
                   .createUserWithEmailAndPassword(email: email, password: senha)
-                  .then((auth) {
+                  .then((auth) async {
                 //Upload da imagem
                 String? idUsuario = auth.user?.uid;
 
                 if (idUsuario != null) {
                   Usuario usuario = Usuario(idUsuario, nome, email);
-                  _uploadImagem(usuario);
+                  await _uploadImagem(usuario, auth);
                 }
 
                 //print("Usuário cadastrado: $idUsuario");
